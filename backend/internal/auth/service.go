@@ -46,10 +46,16 @@ func HashPassword(plaintext string) (string, error) {
 	return string(hash), nil
 }
 
+// dummyHash is a pre-computed bcrypt hash used when the username doesn't match.
+// This ensures bcrypt always runs, preventing timing-based user enumeration.
+var dummyHash, _ = bcrypt.GenerateFromPassword([]byte("dummy"), 12)
+
 // Login verifies credentials and creates a new session on success.
 // Returns the session or an error if credentials are invalid.
 func (s *Service) Login(ctx context.Context, username, password string) (*repository.Session, error) {
 	if username != s.username {
+		// Always run bcrypt to prevent timing oracle on username enumeration
+		bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
 		return nil, ErrInvalidCredentials
 	}
 	if !VerifyPassword(password, s.passwordHash) {
