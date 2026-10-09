@@ -13,6 +13,8 @@ func NewRouter(logger *middleware.RequestLogger, mode string) *gin.Engine {
 	}
 
 	r := gin.New()
+	r.SetTrustedProxies(nil)
+	r.HandleMethodNotAllowed = true
 
 	// Global middleware
 	r.Use(gin.Recovery())

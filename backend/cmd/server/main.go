@@ -26,8 +26,8 @@ func main() {
 }
 
 func run() error {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	// Load configuration
 	cfg, err := config.Load()
@@ -51,7 +51,10 @@ func run() error {
 	logger.Info("connected to database")
 
 	// Run migrations
-	migrationsDir := findMigrationsDir()
+	migrationsDir, err := findMigrationsDir()
+	if err != nil {
+		return err
+	}
 	if err := repository.RunMigrations(ctx, pool, migrationsDir); err != nil {
 		return fmt.Errorf("running migrations: %w", err)
 	}
@@ -70,10 +73,6 @@ func run() error {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Graceful shutdown
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-
 	serverErr := make(chan error, 1)
 	go func() {
 		logger.Info("server listening", "addr", srv.Addr)
@@ -82,8 +81,8 @@ func run() error {
 
 	// Wait for shutdown signal or server error
 	select {
-	case sig := <-shutdown:
-		logger.Info("shutdown signal received", "signal", sig)
+	case <-ctx.Done():
+		logger.Info("shutdown signal received")
 	case err := <-serverErr:
 		if err != http.ErrServerClosed {
 			return fmt.Errorf("server error: %w", err)
@@ -91,7 +90,7 @@ func run() error {
 	}
 
 	// Graceful shutdown with timeout
-	shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 10*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	logger.Info("shutting down server")
@@ -105,7 +104,7 @@ func run() error {
 
 // findMigrationsDir returns the path to the migrations directory.
 // It works both when running from the repo root and from the backend directory.
-func findMigrationsDir() string {
+func findMigrationsDir() (string, error) {
 	candidates := []string{
 		"backend/migrations",
 		"migrations",
@@ -119,9 +118,9 @@ func findMigrationsDir() string {
 
 	for _, dir := range candidates {
 		if info, err := os.Stat(dir); err == nil && info.IsDir() {
-			return dir
+			return dir, nil
 		}
 	}
 
-	return "migrations"
+	return "", fmt.Errorf("migrations directory not found (tried %v)", candidates)
 }

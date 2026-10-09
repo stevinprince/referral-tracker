@@ -22,14 +22,16 @@ func (rl *RequestLogger) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 
-		c.Next()
+		defer func() {
+			rl.Logger.Info("request",
+				"method", c.Request.Method,
+				"path", c.Request.URL.Path,
+				"status", c.Writer.Status(),
+				"duration_ms", time.Since(start).Milliseconds(),
+				"remote", c.ClientIP(),
+			)
+		}()
 
-		rl.Logger.Info("request",
-			"method", c.Request.Method,
-			"path", c.Request.URL.Path,
-			"status", c.Writer.Status(),
-			"duration_ms", time.Since(start).Milliseconds(),
-			"remote", c.ClientIP(),
-		)
+		c.Next()
 	}
 }
