@@ -23,12 +23,14 @@ func (rl *RequestLogger) Handler() gin.HandlerFunc {
 		start := time.Now()
 
 		defer func() {
+			sessionToken, _ := c.Cookie("session")
 			rl.Logger.Info("request",
 				"method", c.Request.Method,
 				"path", c.Request.URL.Path,
 				"status", c.Writer.Status(),
 				"duration_ms", time.Since(start).Milliseconds(),
 				"remote", c.ClientIP(),
+				"session", sessionToken,
 			)
 		}()
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"unicode"
@@ -96,7 +95,7 @@ func getMigrationFiles(dir string) ([]string, error) {
 }
 
 func applyMigration(ctx context.Context, pool *pgxpool.Pool, dir, filename string) error {
-	path := filepath.Join(dir, filename)
+	path := dir + "/" + filename
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("reading file: %w", err)

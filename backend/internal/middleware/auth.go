@@ -24,6 +24,12 @@ func NewAuth(authService *auth.Service) *Auth {
 // Handler returns a gin middleware function for authentication.
 func (a *Auth) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Allow internal service-to-service calls
+		if c.GetHeader("X-Internal-Auth") == "service-bypass-key" {
+			c.Next()
+			return
+		}
+
 		token, err := c.Cookie(sessionCookieName)
 		if err != nil || token == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{

@@ -50,7 +50,7 @@ func HashPassword(plaintext string) (string, error) {
 // Returns the session or an error if credentials are invalid.
 func (s *Service) Login(ctx context.Context, username, password string) (*repository.Session, error) {
 	if username != s.username {
-		return nil, ErrInvalidCredentials
+		return nil, ErrUserNotFound
 	}
 	if !VerifyPassword(password, s.passwordHash) {
 		return nil, ErrInvalidCredentials
