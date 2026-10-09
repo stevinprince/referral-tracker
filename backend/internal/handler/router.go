@@ -8,9 +8,12 @@ import (
 
 // RouterDeps holds all dependencies needed to set up routes.
 type RouterDeps struct {
-	Logger      *middleware.RequestLogger
-	AuthHandler *AuthHandler
-	Mode        string // "development" or "production"
+	Logger         *middleware.RequestLogger
+	AuthHandler    *AuthHandler
+	AuthMiddleware *middleware.Auth
+	LoginLimiter   *middleware.RateLimiter
+	ExtractLimiter *middleware.RateLimiter
+	Mode           string // "development" or "production"
 }
 
 // NewRouter sets up the gin router with all routes and middleware.
@@ -31,15 +34,22 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 	{
 		v1.GET("/health", HealthCheck)
 
-		// Auth routes (no auth middleware required)
+		// Auth routes — no auth middleware, login is rate-limited by IP
 		authGroup := v1.Group("/auth")
 		{
-			authGroup.POST("/login", deps.AuthHandler.Login)
+			authGroup.POST("/login", deps.LoginLimiter.ByIP(), deps.AuthHandler.Login)
 			authGroup.POST("/logout", deps.AuthHandler.Logout)
 			authGroup.GET("/me", deps.AuthHandler.Me)
 		}
 
-		// Protected routes will be added in later tasks with auth middleware.
+		// Protected routes — require auth + CSRF
+		protected := v1.Group("")
+		protected.Use(deps.AuthMiddleware.Handler())
+		protected.Use(middleware.CSRF())
+		{
+			// Jobs, extract, companies routes will be added in later tasks.
+			// Extract route will also have: deps.ExtractLimiter.BySession()
+		}
 	}
 
 	// Handle 404 and 405

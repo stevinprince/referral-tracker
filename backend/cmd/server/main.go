@@ -66,12 +66,20 @@ func run() error {
 	authSvc := auth.NewService(cfg.AppUsername, cfg.AppPasswordHash, cfg.SessionDuration, sessionRepo)
 	authHandler := handler.NewAuthHandler(authSvc, !cfg.IsDevelopment())
 
-	// Set up router
+	// Set up middleware
 	reqLogger := middleware.NewRequestLogger(logger)
+	authMw := middleware.NewAuth(authSvc)
+	loginLimiter := middleware.NewRateLimiter(5.0/60, 5)   // 5 per minute
+	extractLimiter := middleware.NewRateLimiter(10.0/60, 10) // 10 per minute
+
+	// Set up router
 	r := handler.NewRouter(handler.RouterDeps{
-		Logger:      reqLogger,
-		AuthHandler: authHandler,
-		Mode:        cfg.Environment,
+		Logger:         reqLogger,
+		AuthHandler:    authHandler,
+		AuthMiddleware: authMw,
+		LoginLimiter:   loginLimiter,
+		ExtractLimiter: extractLimiter,
+		Mode:           cfg.Environment,
 	})
 
 	// Create HTTP server

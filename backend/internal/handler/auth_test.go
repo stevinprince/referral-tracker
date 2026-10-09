@@ -41,10 +41,14 @@ func setupAuthTestRouter(t *testing.T) *gin.Engine {
 
 	logger := slog.New(slog.DiscardHandler)
 	reqLogger := middleware.NewRequestLogger(logger)
+	authMw := middleware.NewAuth(authSvc)
 	return NewRouter(RouterDeps{
-		Logger:      reqLogger,
-		AuthHandler: authHandler,
-		Mode:        "development",
+		Logger:         reqLogger,
+		AuthHandler:    authHandler,
+		AuthMiddleware: authMw,
+		LoginLimiter:   middleware.NewRateLimiter(100, 100), // lenient for tests
+		ExtractLimiter: middleware.NewRateLimiter(100, 100),
+		Mode:           "development",
 	})
 }
 
