@@ -48,7 +48,13 @@ func HashPassword(plaintext string) (string, error) {
 
 // dummyHash is a pre-computed bcrypt hash used when the username doesn't match.
 // This ensures bcrypt always runs, preventing timing-based user enumeration.
-var dummyHash, _ = bcrypt.GenerateFromPassword([]byte("dummy"), 12)
+var dummyHash = func() []byte {
+	h, err := bcrypt.GenerateFromPassword([]byte("dummy"), 12)
+	if err != nil {
+		panic(fmt.Sprintf("auth: failed to generate dummy hash: %v", err))
+	}
+	return h
+}()
 
 // Login verifies credentials and creates a new session on success.
 // Returns the session or an error if credentials are invalid.

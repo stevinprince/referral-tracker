@@ -8,24 +8,23 @@ import (
 	"github.com/stevin/referral-tracker/backend/internal/auth"
 )
 
-const SessionCookieName = "session"
-const session_cookie_name = SessionCookieName
+const sessionCookieName = "session"
 
 // Auth is middleware that validates the session cookie on protected routes.
 // Rejects with 401 if the session is missing, invalid, or expired.
 type Auth struct {
-	auth_service *auth.Service
+	authService *auth.Service
 }
 
 // NewAuth creates a new Auth middleware.
 func NewAuth(authService *auth.Service) *Auth {
-	return &Auth{auth_service: authService}
+	return &Auth{authService: authService}
 }
 
 // Handler returns a gin middleware function for authentication.
 func (a *Auth) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token, err := c.Cookie(session_cookie_name)
+		token, err := c.Cookie(sessionCookieName)
 		if err != nil || token == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": gin.H{
@@ -36,7 +35,7 @@ func (a *Auth) Handler() gin.HandlerFunc {
 			return
 		}
 
-		_, err = a.auth_service.ValidateSession(c.Request.Context(), token)
+		_, err = a.authService.ValidateSession(c.Request.Context(), token)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": gin.H{
