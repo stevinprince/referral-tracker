@@ -68,7 +68,7 @@ func TestRunMigrations_AppliesAll(t *testing.T) {
 	// Verify sessions table exists
 	err = pool.QueryRow(ctx, `
 		SELECT COUNT(*) FROM information_schema.columns 
-		WHERE table_name = 'sessions'
+		WHERE table_schema = current_schema() AND table_name = 'sessions'
 	`).Scan(&colCount)
 	if err != nil {
 		t.Fatalf("querying sessions columns: %v", err)

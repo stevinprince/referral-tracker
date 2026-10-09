@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -84,8 +85,9 @@ func getMigrationFiles(dir string) ([]string, error) {
 		if e.IsDir() {
 			continue
 		}
-		if strings.HasSuffix(e.Name(), ".sql") {
-			files = append(files, e.Name())
+		name := e.Name()
+		if strings.HasSuffix(name, ".sql") && len(name) > 0 && unicode.IsDigit(rune(name[0])) {
+			files = append(files, name)
 		}
 	}
 
