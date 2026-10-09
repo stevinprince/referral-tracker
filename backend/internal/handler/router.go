@@ -6,29 +6,53 @@ import (
 	"github.com/stevin/referral-tracker/backend/internal/middleware"
 )
 
+// RouterDeps holds all dependencies needed to set up routes.
+type RouterDeps struct {
+	Logger         *middleware.RequestLogger
+	AuthHandler    *AuthHandler
+	AuthMiddleware *middleware.Auth
+	LoginLimiter   *middleware.RateLimiter
+	ExtractLimiter *middleware.RateLimiter
+	Mode           string // "development" or "production"
+}
+
 // NewRouter sets up the gin router with all routes and middleware.
-func NewRouter(logger *middleware.RequestLogger, mode string) *gin.Engine {
-	if mode != "development" {
+func NewRouter(deps RouterDeps) *gin.Engine {
+	if deps.Mode != "development" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	r := gin.New()
-	r.SetTrustedProxies(nil)
 	r.HandleMethodNotAllowed = true
 
 	// Global middleware
 	r.Use(gin.Recovery())
-	r.Use(logger.Handler())
+	r.Use(deps.Logger.Handler())
 
 	// API routes
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/health", HealthCheck)
 
-		// Auth, jobs, extract, companies routes will be added in later tasks.
+		// Auth routes — no auth middleware, login is rate-limited by IP
+		authGroup := v1.Group("/auth")
+		{
+			authGroup.POST("/login", deps.LoginLimiter.ByIP(), deps.AuthHandler.Login)
+			authGroup.POST("/logout", deps.AuthHandler.Logout)
+			authGroup.GET("/me", deps.AuthHandler.Me)
+		}
+
+		// Protected routes — require auth + CSRF
+		protected := v1.Group("")
+		protected.Use(deps.AuthMiddleware.Handler())
+		protected.Use(middleware.CSRF())
+		{
+			// Jobs, extract, companies routes will be added in later tasks.
+			// Extract route will also have: deps.ExtractLimiter.BySession()
+		}
 	}
 
-	// Handle 404 and 405 for API routes
+	// Handle 404 and 405
 	r.NoRoute(NotFoundHandler)
 	r.NoMethod(MethodNotAllowedHandler)
 
