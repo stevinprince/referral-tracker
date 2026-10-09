@@ -141,7 +141,7 @@ func TestGetMigrationFiles_FiltersNonMigrations(t *testing.T) {
 
 	// Create a mix of files: valid migrations and files that should be excluded
 	validFiles := []string{"001_create_jobs.sql", "002_create_sessions.sql"}
-	invalidFiles := []string{"scratch.sql", "backup.sql", "README.md", "notes.txt", ".hidden.sql"}
+	invalidFiles := []string{"scratch.sql", "backup.sql", "README.md", "notes.txt", ".hidden.sql", "003_notes.txt"}
 
 	for _, f := range append(validFiles, invalidFiles...) {
 		if err := os.WriteFile(filepath.Join(dir, f), []byte("-- stub"), 0644); err != nil {
