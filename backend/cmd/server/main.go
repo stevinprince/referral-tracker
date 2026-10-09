@@ -82,6 +82,7 @@ func run() error {
 	// Wait for shutdown signal or server error
 	select {
 	case <-ctx.Done():
+		stop()
 		logger.Info("shutdown signal received")
 	case err := <-serverErr:
 		if err != http.ErrServerClosed {

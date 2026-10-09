@@ -48,6 +48,15 @@ func TestHealthCheck_MethodNotAllowed(t *testing.T) {
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusMethodNotAllowed)
 	}
+
+	var body ErrorResponse
+	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
+		t.Fatalf("decoding: %v", err)
+	}
+
+	if body.Error.Code != "METHOD_NOT_ALLOWED" {
+		t.Errorf("error.code = %q, want %q", body.Error.Code, "METHOD_NOT_ALLOWED")
+	}
 }
 
 func TestNotFound_ReturnsJSON(t *testing.T) {

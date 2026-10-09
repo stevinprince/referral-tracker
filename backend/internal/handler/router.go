@@ -28,8 +28,9 @@ func NewRouter(logger *middleware.RequestLogger, mode string) *gin.Engine {
 		// Auth, jobs, extract, companies routes will be added in later tasks.
 	}
 
-	// Handle 404 for API routes
+	// Handle 404 and 405 for API routes
 	r.NoRoute(NotFoundHandler)
+	r.NoMethod(MethodNotAllowedHandler)
 
 	return r
 }

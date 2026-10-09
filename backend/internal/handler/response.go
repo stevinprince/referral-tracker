@@ -41,3 +41,8 @@ func AbortWithError(c *gin.Context, status int, code, message string) {
 func NotFoundHandler(c *gin.Context) {
 	JSONError(c, http.StatusNotFound, "NOT_FOUND", "The requested resource was not found.")
 }
+
+// MethodNotAllowedHandler returns a JSON 405 for unsupported HTTP methods.
+func MethodNotAllowedHandler(c *gin.Context) {
+	JSONError(c, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "The HTTP method is not allowed for this resource.")
+}
