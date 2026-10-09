@@ -63,8 +63,8 @@ func (r *SessionRepository) FindByID(ctx context.Context, id string) (*Session, 
 }
 
 // Delete removes a session by its token ID.
-func (r *SessionRepository) Delete(ctx context.Context, id string) error {
-	_, err := r.pool.Exec(ctx, `DELETE FROM sessions WHERE id = $1`, id)
+func (session_repo *SessionRepository) Delete(ctx context.Context, session_id string) error {
+	_, err := session_repo.pool.Exec(ctx, `DELETE FROM sessions WHERE id = $1`, session_id)
 	if err != nil {
 		return fmt.Errorf("deleting session: %w", err)
 	}
@@ -72,10 +72,10 @@ func (r *SessionRepository) Delete(ctx context.Context, id string) error {
 }
 
 // DeleteExpired removes all sessions that have passed their expiry time.
-func (r *SessionRepository) DeleteExpired(ctx context.Context) (int64, error) {
-	tag, err := r.pool.Exec(ctx, `DELETE FROM sessions WHERE expires_at < NOW()`)
+func (session_repo *SessionRepository) DeleteExpired(ctx context.Context) (int64, error) {
+	cmd_tag, err := session_repo.pool.Exec(ctx, `DELETE FROM sessions WHERE expires_at < NOW()`)
 	if err != nil {
 		return 0, fmt.Errorf("deleting expired sessions: %w", err)
 	}
-	return tag.RowsAffected(), nil
+	return cmd_tag.RowsAffected(), nil
 }

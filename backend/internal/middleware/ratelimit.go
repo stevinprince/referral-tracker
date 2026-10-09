@@ -26,16 +26,16 @@ func NewRateLimiter(rps float64, burst int) *RateLimiter {
 	}
 }
 
-func (rl *RateLimiter) getLimiter(key string) *rate.Limiter {
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
+func (rate_limiter *RateLimiter) getLimiter(key string) *rate.Limiter {
+	rate_limiter.mu.Lock()
+	defer rate_limiter.mu.Unlock()
 
-	if limiter, exists := rl.limiters[key]; exists {
+	if limiter, exists := rate_limiter.limiters[key]; exists {
 		return limiter
 	}
 
-	limiter := rate.NewLimiter(rl.rate, rl.burst)
-	rl.limiters[key] = limiter
+	limiter := rate.NewLimiter(rate_limiter.rate, rate_limiter.burst)
+	rate_limiter.limiters[key] = limiter
 	return limiter
 }
 
@@ -59,7 +59,7 @@ func (rl *RateLimiter) ByIP() gin.HandlerFunc {
 // BySession returns a middleware that rate-limits by session cookie.
 func (rl *RateLimiter) BySession() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		key, err := c.Cookie(sessionCookieName)
+		key, err := c.Cookie(session_cookie_name)
 		if err != nil || key == "" {
 			// No session — let the auth middleware handle rejection
 			c.Next()
