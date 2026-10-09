@@ -56,7 +56,7 @@ func TestRunMigrations_AppliesAll(t *testing.T) {
 	var colCount int
 	err = pool.QueryRow(ctx, `
 		SELECT COUNT(*) FROM information_schema.columns 
-		WHERE table_name = 'jobs'
+		WHERE table_schema = current_schema() AND table_name = 'jobs'
 	`).Scan(&colCount)
 	if err != nil {
 		t.Fatalf("querying jobs columns: %v", err)
