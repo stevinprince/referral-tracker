@@ -136,6 +136,34 @@ func TestRunMigrations_InvalidDir(t *testing.T) {
 	}
 }
 
+func TestGetMigrationFiles_FiltersNonMigrations(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create a mix of files: valid migrations and files that should be excluded
+	validFiles := []string{"001_create_jobs.sql", "002_create_sessions.sql"}
+	invalidFiles := []string{"scratch.sql", "backup.sql", "README.md", "notes.txt", ".hidden.sql"}
+
+	for _, f := range append(validFiles, invalidFiles...) {
+		if err := os.WriteFile(filepath.Join(dir, f), []byte("-- stub"), 0644); err != nil {
+			t.Fatalf("creating test file %s: %v", f, err)
+		}
+	}
+
+	got, err := getMigrationFiles(dir)
+	if err != nil {
+		t.Fatalf("getMigrationFiles: %v", err)
+	}
+
+	if len(got) != len(validFiles) {
+		t.Fatalf("got %d files %v, want %d files %v", len(got), got, len(validFiles), validFiles)
+	}
+	for i, want := range validFiles {
+		if got[i] != want {
+			t.Errorf("file[%d] = %q, want %q", i, got[i], want)
+		}
+	}
+}
+
 // findMigrationsDir locates the migrations directory relative to the test file.
 func findMigrationsDir(t *testing.T) string {
 	t.Helper()
