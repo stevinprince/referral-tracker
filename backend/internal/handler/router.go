@@ -21,11 +21,7 @@ func NewRouter(logger *middleware.RequestLogger, mode string) *gin.Engine {
 	r.Use(logger.Handler())
 
 	// API routes
-	v1, err := r.Group("/api/v1")
-	if err != nil {
-		logger.Error("Failed to create API v1 group", err)
-		return nil
-	}
+	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/health", HealthCheck)
 
