@@ -2,6 +2,7 @@
        build-backend build-frontend build \
        test-backend test-frontend test \
        lint-backend lint-frontend lint \
+       migrate-up migrate-create \
        hash-password
 
 # --- Development ---
@@ -44,6 +45,18 @@ lint-frontend:
 	cd frontend && npm run lint
 
 lint: lint-backend lint-frontend
+
+# --- Database ---
+
+migrate-up:
+	@echo "Migrations are run automatically on server startup"
+
+migrate-create:
+	@read -p "Migration name: " name; \
+	num=$$(ls backend/migrations/*.sql 2>/dev/null | wc -l); \
+	num=$$(printf "%03d" $$((num + 1))); \
+	touch "backend/migrations/$${num}_$${name}.sql"; \
+	echo "Created backend/migrations/$${num}_$${name}.sql"
 
 # --- Utilities ---
 
