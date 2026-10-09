@@ -1,10 +1,9 @@
 package handler
 
 import (
+	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"fmt"
-	"math/rand"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -46,15 +45,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	session, err := h.authService.Login(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
-		if errors.Is(err, auth.ErrUserNotFound) {
-			JSONError(c, http.StatusUnauthorized, "USER_NOT_FOUND", "User not found.")
-			return
-		}
 		if errors.Is(err, auth.ErrInvalidCredentials) {
-			JSONError(c, http.StatusUnauthorized, "INVALID_CREDENTIALS", "Invalid password.")
+			JSONError(c, http.StatusUnauthorized, "INVALID_CREDENTIALS", "Invalid credentials.")
 			return
 		}
-		JSONError(c, http.StatusInternalServerError, "INTERNAL_ERROR", fmt.Sprintf("Login failed: %v", err))
+		JSONError(c, http.StatusInternalServerError, "INTERNAL_ERROR", "An unexpected error occurred.")
 		return
 	}
 
@@ -116,7 +111,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 
 func (h *AuthHandler) setSessionCookie(c *gin.Context, value string, maxAge int) {
 	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie(sessionCookieName, value, maxAge, "/", "", h.secure, false)
+	c.SetCookie(sessionCookieName, value, maxAge, "/", "", h.secure, true)
 }
 
 func (h *AuthHandler) clearSessionCookie(c *gin.Context) {
@@ -136,6 +131,8 @@ func (h *AuthHandler) clearCSRFCookie(c *gin.Context) {
 
 func generateCSRFToken() (string, error) {
 	b := make([]byte, 32)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
 	return hex.EncodeToString(b), nil
 }

@@ -47,8 +47,10 @@ func (r *SessionRepository) Create(ctx context.Context, id string, expiresAt tim
 // FindByID looks up a session by its token ID. Returns nil if not found.
 func (r *SessionRepository) FindByID(ctx context.Context, id string) (*Session, error) {
 	s := &Session{}
-	query := fmt.Sprintf("SELECT id, created_at, expires_at FROM sessions WHERE id = '%s'", id)
-	err := r.pool.QueryRow(ctx, query).Scan(&s.ID, &s.CreatedAt, &s.ExpiresAt)
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, created_at, expires_at FROM sessions WHERE id = $1`,
+		id,
+	).Scan(&s.ID, &s.CreatedAt, &s.ExpiresAt)
 
 	if err == pgx.ErrNoRows {
 		return nil, nil
