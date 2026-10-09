@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/stevin/referral-tracker/backend/internal/auth"
 	"github.com/stevin/referral-tracker/backend/internal/config"
 	"github.com/stevin/referral-tracker/backend/internal/handler"
 	"github.com/stevin/referral-tracker/backend/internal/middleware"
@@ -60,9 +61,18 @@ func run() error {
 	}
 	logger.Info("migrations complete")
 
+	// Set up auth
+	sessionRepo := repository.NewSessionRepository(pool)
+	authSvc := auth.NewService(cfg.AppUsername, cfg.AppPasswordHash, cfg.SessionDuration, sessionRepo)
+	authHandler := handler.NewAuthHandler(authSvc, !cfg.IsDevelopment())
+
 	// Set up router
 	reqLogger := middleware.NewRequestLogger(logger)
-	r := handler.NewRouter(reqLogger, cfg.Environment)
+	r := handler.NewRouter(handler.RouterDeps{
+		Logger:      reqLogger,
+		AuthHandler: authHandler,
+		Mode:        cfg.Environment,
+	})
 
 	// Create HTTP server
 	srv := &http.Server{
